@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import csv
+import numpy as np
 
 # Store the names of the numerical features
 feature_columns = [
@@ -112,3 +113,51 @@ display.plot()
 plt.title("GesturePoint KNN - Confusion Matrix")
 plt.tight_layout()
 plt.show()
+
+# Find the examples the model classified incorrectly
+print("\nMISCLASSIFIED EXAMPLES:")
+
+for index in range(len(y_test)):
+    actual = y_test[index]
+    predicted = y_pred[index]
+
+    if actual != predicted:
+        print(
+            f"Test example {index + 1}: "
+            f"Actual = {actual}, "
+            f"Predicted = {predicted}, "
+            f"Features = {X_test[index]}"
+        )
+        
+
+print("\nNEAREST-NEIGHBOR INVESTIGATION:")
+
+# Get the fitted scaler and KNN classifier from the pipeline
+scaler = model.named_steps["standardscaler"]
+knn = model.named_steps["kneighborsclassifier"]
+
+# Transform the testing features using the fitted scaler
+X_test_scaled = scaler.transform(X_test)
+
+for index in range(len(y_test)):
+    if y_test[index] != y_pred[index]:
+        distances, neighbor_indices = knn.kneighbors(
+            X_test_scaled[index].reshape(1, -1)
+        )
+
+        print(
+            f"\nTest example {index + 1}: "
+            f"Actual = {y_test[index]}, "
+            f"Predicted = {y_pred[index]}"
+        )
+
+        print("Nearest training neighbors:")
+
+        for rank, (distance, neighbor_index) in enumerate(
+            zip(distances[0], neighbor_indices[0]),
+            start=1
+        ):
+            print(
+                f"{rank}. Gesture = {y_train[neighbor_index]}, "
+                f"Distance = {distance:.4f}"
+            )
